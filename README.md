@@ -41,6 +41,7 @@ this.link = ApolloLink.from([
     new HttpLink({ uri: URI_TO_YOUR_GRAPHQL_SERVER }),
 ]);
 
+// Assume the server/network delay for this request is 100ms
 const opColor = {
     query: gql`mutation { setFavoriteColor(color: "RED") }`,
     context: {
@@ -49,6 +50,7 @@ const opColor = {
     },
 };
 
+// Assume the server/network delay for this request is 10ms
 const opColor2 = {
     query: gql`mutation { setFavoriteColor(color: "BLUE") }`,
     context: {
@@ -57,7 +59,8 @@ const opColor2 = {
     },
 };
 
-const opColor2 = {
+// Assume the server/network delay for this request is 50ms
+const opNumber = {
     query: gql`mutation { setFavoriteNumber(number: 7) }`,
     context: {
         // A request only gets serialized if it has context.serializationKey
@@ -65,15 +68,19 @@ const opColor2 = {
     },
 };
 
-
-link.execute(op).subscribe({
-    next(response) { console.log(response.data.hello); },
-    complete() { console.log('complete!'); },
+link.execute(opColor).subscribe({
+    next(response) { console.log(response.data.setFavoriteColor); },
+});
+link.execute(opColor2).subscribe({
+    next(response) { console.log(response.data.setFavoriteColor); },
 });
 
-// This code will output:
-// "B 0"
-// "A 0"
-// "A 1"
-// "complete!"
+link.execute(opNumber).subscribe({
+    next(response) { console.log(response.data.setFavoriteNumber); },
+});
+
+// Assuming the server/network delays mentioned above, this code will output:
+// 7 (after 50ms)
+// RED (after 100ms)
+// BLUE (after 110ms)
 ```
