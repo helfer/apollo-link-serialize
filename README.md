@@ -1,5 +1,7 @@
 # apollo-link-serialize
 
+[![npm version](https://badge.fury.io/js/apollo-link-serialize.svg)](https://badge.fury.io/js/apollo-link-serialize)
+
 An Apollo Link that serializes requests by key, making sure that they execute in the exact order in which they were submitted.
 
 ### Motivation
