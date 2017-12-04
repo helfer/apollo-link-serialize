@@ -36,7 +36,7 @@
     "graphql",
     "apollo",
     "apollo-link",
-    "offline",
+    "serialize",
     "queue"
   ],
   "author": "Jonas Helfer <jonas@helfer.email>",
