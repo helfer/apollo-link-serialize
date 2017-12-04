@@ -1,6 +1,8 @@
 # apollo-link-serialize
 
 [![npm version](https://badge.fury.io/js/apollo-link-serialize.svg)](https://badge.fury.io/js/apollo-link-serialize)
+[![Build Status](https://travis-ci.org/helfer/apollo-link-serialize.svg?branch=master)](https://travis-ci.org/helfer/apollo-link-serialize)
+[![codecov](https://codecov.io/gh/helfer/apollo-link-serialize/branch/master/graph/badge.svg)](https://codecov.io/gh/helfer/apollo-link-serialize)
 
 An Apollo Link that serializes requests by key, making sure that they execute in the exact order in which they were submitted.
 
