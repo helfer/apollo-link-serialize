@@ -21,10 +21,11 @@ export default class SerializingLink extends ApolloLink {
     private opQueues: { [key: string]: OperationQueueEntry[] } = {};
 
     public request(operation: Operation, forward: NextLink ) {
-        if (!operation.getContext().serializationKey) {
+        const key = this.keyForOperation(operation);
+        if (!key) {
             return forward(operation);
         }
-        const key = operation.getContext().serializationKey;
+
         return new Observable(observer => {
             this.enqueue(key, { operation, forward, observer });
 
@@ -93,5 +94,9 @@ export default class SerializingLink extends ApolloLink {
                 this.dequeue(key);
             },
         });
+    }
+
+    private keyForOperation = (operation: Operation): string => {
+        return operation.getContext().serializationKey;
     }
 }
