@@ -41,14 +41,18 @@ The key can be expressed via the `@serialize(key: …)` directive:
 mutation favoriteIsRed @serialize(key: "favoriteColor") {
     setFavoriteColor(color: "RED)
 }
+```
 
+```graphql
 # …or it can be a variable in the operation…
 mutation upvotePost($id: ID!) @serialize(key: $id) {
     post(id: $id) {
         addVote
     }
 }
+```
 
+```graphql
 # …and finally, it also supports interpolation:
 mutation upvotePost($id: ID!) @serialize(key: "post:{{id}}") {
     post(id: $id) {
