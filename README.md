@@ -32,6 +32,46 @@ yarn add apollo-link-serialize
 
 ### Usage
 
+You can indicate requests that should be serialized by providing a serialization key.  All requests with the same serialization key will be queued behind one another in the order they are executed.
+
+The key can be expressed via the `@serialize(key: …)` directive:
+
+```graphql
+# The key can be a literal string…
+mutation favoriteIsRed @serialize(key: "favoriteColor") {
+    setFavoriteColor(color: "RED)
+}
+
+# …or it can be a variable in the operation…
+mutation upvotePost($id: ID!) @serialize(key: $id) {
+    post(id: $id) {
+        addVote
+    }
+}
+
+# …and finally, it also supports interpolation:
+mutation upvotePost($id: ID!) @serialize(key: "post:{{id}}") {
+    post(id: $id) {
+        addVote
+    }
+}
+```
+
+Additionally, you can also pass an explicit serialization key in the operation's context:
+
+```js
+link.execute({
+    query: gql`mutation { setFavoriteColor(color: "RED") }`,
+    context: {
+        serializationKey: 'favoriteColor',
+    },
+});
+```
+
+Requests without a serialization key are executed in parallel.  Similarly, requests with differing keys are executed in parallel with one another.
+
+### Example
+
 ```js
 import { ApolloLink } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
@@ -47,29 +87,29 @@ this.link = ApolloLink.from([
 
 // Assume the server/network delay for this request is 100ms
 const opColor = {
-    query: gql`mutation { setFavoriteColor(color: "RED") }`,
-    context: {
-        // A request only gets serialized if it has context.serializationKey
-        serializationKey: 'favoriteColor',
-    },
+    query: gql`
+        mutation favoriteIsRed @serialize(key: "favoriteColor") {
+            setFavoriteColor(color: "RED")
+        }
+    `,
 };
 
 // Assume the server/network delay for this request is 10ms
 const opColor2 = {
-    query: gql`mutation { setFavoriteColor(color: "BLUE") }`,
-    context: {
-        // A request only gets serialized if it has context.serializationKey
-        serializationKey: 'favoriteColor',
-    },
+    query: gql`
+        mutation favoriteIsBlue @serialize(key: "favoriteColor") {
+            setFavoriteColor(color: "BLUE")
+        }
+    `,
 };
 
 // Assume the server/network delay for this request is 50ms
 const opNumber = {
-    query: gql`mutation { setFavoriteNumber(number: 7) }`,
-    context: {
-        // A request only gets serialized if it has context.serializationKey
-        serializationKey: 'favoriteNumber',
-    },
+    query: gql`
+        mutation favoriteIsSeven @serialize(key: "favoriteNumber") {
+            setFavoriteNumber(number: 7)
+        }
+    `,
 };
 
 link.execute(opColor).subscribe({
@@ -78,7 +118,6 @@ link.execute(opColor).subscribe({
 link.execute(opColor2).subscribe({
     next(response) { console.log(response.data.setFavoriteColor); },
 });
-
 link.execute(opNumber).subscribe({
     next(response) { console.log(response.data.setFavoriteNumber); },
 });
