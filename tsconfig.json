@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "declaration": true,
-        "module": "coommonjs",
+        "module": "commonjs",
         "moduleResolution": "node",
         "noImplicitAny": true,
         "lib": ["esnext"],
