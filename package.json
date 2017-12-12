@@ -1,6 +1,6 @@
 {
   "name": "apollo-link-serialize",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "A link that serializes requests by key, making sure that they execute in the exact order submitted",
   "dependencies": {
     "apollo-link": "^0.7.0"
