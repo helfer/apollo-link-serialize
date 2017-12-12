@@ -27,7 +27,7 @@ export function extractKey(operation: Operation): { operation: Operation, key?: 
   // Pass through the operation, with the directive removed so that the server
   // doesn't see it.
   const finalIndex = path.pop();
-  const newOperation = createOperation(null, {
+  const newOperation = createOperation(operation.getContext(), {
     ...operation as any,
     query: deepUpdate(operation.query, path, {$splice: [[finalIndex, 1]]}),
   });

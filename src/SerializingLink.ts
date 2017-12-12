@@ -7,6 +7,8 @@ import {
     FetchResult,
 } from 'apollo-link';
 
+import { extractKey } from './extractKey';
+
 export interface OperationQueueEntry {
     operation: Operation;
     forward: NextLink;
@@ -20,8 +22,8 @@ export interface OperationQueueEntry {
 export default class SerializingLink extends ApolloLink {
     private opQueues: { [key: string]: OperationQueueEntry[] } = {};
 
-    public request(operation: Operation, forward: NextLink ) {
-        const key = this.keyForOperation(operation);
+    public request(origOperation: Operation, forward: NextLink ) {
+        const { operation, key } = extractKey(origOperation);
         if (!key) {
             return forward(operation);
         }
@@ -94,9 +96,5 @@ export default class SerializingLink extends ApolloLink {
                 this.dequeue(key);
             },
         });
-    }
-
-    private keyForOperation = (operation: Operation): string => {
-        return operation.getContext().serializationKey;
     }
 }
