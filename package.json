@@ -3,8 +3,9 @@
   "version": "2.0.0",
   "description": "A link that serializes requests by key, making sure that they execute in the exact order submitted",
   "dependencies": {
-    "apollo-link": "^0.7.0",
-    "deep-update": "^1.3.4"
+    "apollo-link": "1.x",
+    "deep-update": "^1.3.4",
+    "ts-jest": "^22.4.1"
   },
   "devDependencies": {
     "@types/graphql": "^0.11.7",
