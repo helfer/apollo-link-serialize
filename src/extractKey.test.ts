@@ -108,4 +108,18 @@ describe('extractKey', () => {
         expect(key).toEqual('thing:123:foo');
         expect(operation).not.toBe(origOperation);
     });
+
+    it('returns the original operation if no serialize directive is present', () => {
+        const origOperation = createOperation({}, {
+            query: gql`
+                mutation doThing {
+                    doThing
+                }
+            `,
+        });
+        const { operation, key } = extractKey(origOperation);
+
+        expect(key).toEqual(undefined);
+        expect(operation).toBe(origOperation);
+    });
 });
