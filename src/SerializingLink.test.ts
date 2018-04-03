@@ -324,6 +324,71 @@ describe('SerializingLink', () => {
             )),
         ]);
     });
+
+    it('doesn\'t queue two mutations when a mutation completes', () => {
+        const op1: GraphQLRequest = {
+            query: gql`{ q1 }`,
+            operationName: 'op1',
+            context: {
+                serializationKey: 'A',
+                testSequence: [
+                    {
+                        type: 'next',
+                        value: testResponse,
+                        delay: 1,
+                    },
+                    {
+                        type: 'complete',
+                        delay: 1,
+                    },
+                ],
+            },
+        };
+        const op2: GraphQLRequest = {
+            query: gql`{ q2 }`,
+            operationName: 'op2',
+            context: {
+                serializationKey: 'A',
+                testSequence: [
+                    {
+                        type: 'next',
+                        value: testResponse,
+                        delay: 1,
+                    },
+                    {
+                        type: 'complete',
+                        delay: 1,
+                    },
+                ],
+            },
+        };
+        const op3: GraphQLRequest = {
+            query: gql`{ q3 }`,
+            operationName: 'op3',
+            context: {
+                serializationKey: 'A',
+                testSequence: [
+                    {
+                        type: 'next',
+                        value: testResponse,
+                        delay: 1,
+                    },
+                    {
+                        type: 'complete',
+                        delay: 1,
+                    },
+                ],
+            },
+        };
+        execute(link, op1).subscribe(() => {});
+        execute(link, op2).subscribe(() => {});
+        execute(link, op3).subscribe(() => {});
+        expect(testLink.operations).toHaveLength(1);
+        jest.runTimersToTime(1);
+        expect(testLink.operations).toHaveLength(2);
+        jest.runTimersToTime(1);
+        expect(testLink.operations).toHaveLength(3);
+    });
     // TODO: Tet unsubscribing from the second op
     // TODO?: Test subscribers without error, next or complete function?
     // or maybe those are just wrong types?

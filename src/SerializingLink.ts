@@ -85,12 +85,12 @@ export default class SerializingLink extends ApolloLink {
         this.opQueues[key][0].subscription = forward(operation).subscribe({
             next: (v) => observer.next && observer.next(v),
             error: (e: Error) => {
-                if (observer.error) { observer.error(e); }
                 this.dequeue(key);
+                if (observer.error) { observer.error(e); }
             },
             complete: () => {
-                if (observer.complete) { observer.complete(); }
                 this.dequeue(key);
+                if (observer.complete) { observer.complete(); }
             },
         });
     }
