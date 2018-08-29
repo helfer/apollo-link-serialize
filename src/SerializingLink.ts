@@ -34,11 +34,11 @@ export default class SerializingLink extends ApolloLink {
         });
     }
     // Remove the first element from the queue and start the next operation
-    private dequeue = (key: string) => {
+    private dequeue = (key: string, observer: Observer<FetchResult>) => {
         if (!this.opQueues[key]) {
             return;
         }
-        this.opQueues[key].shift();
+        this.opQueues[key] = this.opQueues[key].filter(op => op.observer !== observer);
         this.startFirstOpIfNotStarted(key);
         // console.log('dequeue', key, 'queue length', this.opQueues[key].length);
     }
@@ -86,11 +86,11 @@ export default class SerializingLink extends ApolloLink {
             next: (v) => observer.next && observer.next(v),
             error: (e: Error) => {
                 if (observer.error) { observer.error(e); }
-                this.dequeue(key);
+                this.dequeue(key, observer);
             },
             complete: () => {
                 if (observer.complete) { observer.complete(); }
-                this.dequeue(key);
+                this.dequeue(key, observer);
             },
         });
     }
