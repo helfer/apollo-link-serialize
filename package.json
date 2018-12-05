@@ -1,6 +1,6 @@
 {
-  "name": "apollo-link-serialize",
-  "version": "2.0.0",
+  "name": "@homepass/apollo-link-serialize",
+  "version": "2.0.2",
   "description": "A link that serializes requests by key, making sure that they execute in the exact order submitted",
   "dependencies": {
     "apollo-link": "^0.7.0"
@@ -22,7 +22,7 @@
   "module": "build/dist/index.js",
   "repository": {
     "type": "git",
-    "url": "helfer/apollo-link-serialize"
+    "url": "HomePass/apollo-link-serialize"
   },
   "jsnext:main": "build/dist/index.js",
   "typings": "build/dist/index.d.ts",
@@ -40,6 +40,6 @@
     "serialize",
     "queue"
   ],
-  "author": "Jonas Helfer <jonas@helfer.email>",
+  "contributors": ["Jonas Helfer <jonas@helfer.email>","Hammad Jutt <h@jutt.ca>"],
   "license": "MIT"
 }
