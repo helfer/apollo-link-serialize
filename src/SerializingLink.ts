@@ -1,11 +1,11 @@
 import {
     ApolloLink,
     Observable,
-    Observer,
     Operation,
     NextLink,
     FetchResult,
 } from 'apollo-link';
+import { Observer } from 'zen-observable-ts';
 
 export interface OperationQueueEntry {
     operation: Operation;
