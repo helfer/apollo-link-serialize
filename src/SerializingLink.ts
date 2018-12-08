@@ -20,7 +20,7 @@ export interface OperationQueueEntry {
 export default class SerializingLink extends ApolloLink {
     private opQueues: { [key: string]: OperationQueueEntry[] } = {};
 
-    public request(operation: Operation, forward: NextLink ) {
+    public request(operation: Operation, forward: NextLink) {
         if (!operation.getContext().serializationKey) {
             return forward(operation);
         }
