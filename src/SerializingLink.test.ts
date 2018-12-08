@@ -324,6 +324,78 @@ describe('SerializingLink', () => {
             )),
         ]);
     });
+    it('only enqueues one subsequent query on complete of first', () => {
+        // make three queries with same key
+        // second query returns slower than thirds, but runs first
+        // make sure third query completes after second
+        const ts1: ObservableEvent[] = [
+            {
+                type: 'next',
+                delay: 2,
+                value: { data: { q1: 'one' } },
+            },
+            {
+                type: 'complete',
+                delay: 2,
+            },
+        ];
+        const op1: GraphQLRequest = {
+            query: gql`{ q1 }`,
+            context: {
+                serializationKey: 'A',
+                testSequence: ts1,
+            },
+        };
+        const ts2: ObservableEvent[] = [
+            {
+                type: 'next',
+                delay: 3,
+                value: { data: { q2: 'two' } },
+            },
+            {
+                type: 'complete',
+                delay: 3,
+            },
+        ];
+        const op2: GraphQLRequest = {
+            query: gql`{ q3 }`,
+            context: {
+                serializationKey: 'A',
+                testSequence: ts2,
+            },
+        };
+        const ts3: ObservableEvent[] = [
+            {
+                type: 'next',
+                delay: 1,
+                value: { data: { q3: 'three' } },
+            },
+            {
+                type: 'complete',
+                delay: 1,
+            },
+        ];
+        const op3: GraphQLRequest = {
+            query: gql`{ q3 }`,
+            context: {
+                serializationKey: 'A',
+                testSequence: ts3,
+            },
+        };
+        return Promise.resolve(assertObservableSequence(
+            mergeObservables(
+                execute(link, op1),
+                execute(link, op2),
+                execute(link, op3),
+            ),
+            [
+                toResultValue(ts1[0]),
+                toResultValue(ts2[0]),
+                ...(ts3.map(toResultValue)),
+            ],
+            () => jest.runAllTimers(),
+        ));
+    });
     // TODO: Tet unsubscribing from the second op
     // TODO?: Test subscribers without error, next or complete function?
     // or maybe those are just wrong types?
