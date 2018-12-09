@@ -1,11 +1,11 @@
 {
   "name": "apollo-link-serialize",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A link that serializes requests by key, making sure that they execute in the exact order submitted",
   "dependencies": {
-    "apollo-link": "1.x",
+    "apollo-link": "^1.2.4",
     "deep-update": "^1.3.4",
-    "ts-jest": "^22.4.1"
+    "zen-observable-ts": "^0.8.11"
   },
   "devDependencies": {
     "@types/graphql": "^0.11.7",
@@ -17,6 +17,7 @@
     "nyc": "^11.2.1",
     "react-scripts-ts": "^2.6.0",
     "tslint": "^5.8.0",
+    "ts-jest": "^20.0.14",
     "typescript": "^2.6.2"
   },
   "main": "build/dist/index.js",
