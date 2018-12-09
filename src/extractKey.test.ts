@@ -21,7 +21,7 @@ describe('extractKey', () => {
 
     it('asserts that the key argument is present', () => {
         expect(() => {
-            const origOperation = createOperation(null, {
+            const origOperation = createOperation(undefined, {
                 query: gql`
                     mutation doThing @serialize {
                         doThing
@@ -34,7 +34,7 @@ describe('extractKey', () => {
 
     it('asserts that the key argument is a string or variable', () => {
         expect(() => {
-            const origOperation = createOperation(null, {
+            const origOperation = createOperation(undefined, {
                 query: gql`
                     mutation doThing @serialize(key: 123) {
                         doThing
@@ -46,7 +46,7 @@ describe('extractKey', () => {
     });
 
     it('supports literal keys via @serialize', () => {
-        const origOperation = createOperation(null, {
+        const origOperation = createOperation(undefined, {
             query: gql`
                 mutation doThing @serialize(key: "bar") {
                     doThing
@@ -60,7 +60,7 @@ describe('extractKey', () => {
     });
 
     it('supports direct variables via @serialize', () => {
-        const origOperation = createOperation(null, {
+        const origOperation = createOperation(undefined, {
             query: gql`
                 mutation doThing($var: String) @serialize(key: $var) {
                     doThing
@@ -77,7 +77,7 @@ describe('extractKey', () => {
     });
 
     it('removes @serialize from the query document', () => {
-        const origOperation = createOperation(null, {
+        const origOperation = createOperation(undefined, {
             query: gql`
                 mutation doThing @serialize(key: "bar") @fizz {
                     doThing
@@ -92,7 +92,7 @@ describe('extractKey', () => {
     });
 
     it('interpolates variables within a string', () => {
-        const origOperation = createOperation(null, {
+        const origOperation = createOperation(undefined, {
             query: gql`
                 mutation doThing($id: Integer, $oid: String) @serialize(key: "thing:{{id}}:{{oid}}") @fizz {
                     doThing

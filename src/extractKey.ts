@@ -45,7 +45,7 @@ function extractDirective({ query, operationName }: Operation): { directive?: Di
         if (node.kind !== 'OperationDefinition') {
             continue;
         }
-        if (!operationName || node.name.value == operationName) {
+        if (!operationName || node.name.value === operationName) {
             operationNode = node;
             path.push('definitions', `${i}`);
             break;
