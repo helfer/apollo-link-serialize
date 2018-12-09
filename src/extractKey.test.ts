@@ -1,8 +1,10 @@
 import { createOperation } from 'apollo-link';
 import gql from 'graphql-tag';
-import { OperationDefinitionNode } from 'graphql';
+import { OperationDefinitionNode, print } from 'graphql';
 
 import { extractKey } from './extractKey';
+
+import { removeDirectivesFromDocument, checkDocument } from 'apollo-utilities';
 
 describe('extractKey', () => {
     it('prefers context.serializationKey if the directive is also supplied', () => {
@@ -32,37 +34,51 @@ describe('extractKey', () => {
         }).toThrow(/@serialize.*key/);
     });
 
-    it('asserts that the key argument is a string or variable', () => {
+    it('asserts that the key argument is of valid type', () => {
         expect(() => {
             const origOperation = createOperation(undefined, {
                 query: gql`
-                    mutation doThing @serialize(key: 123) {
+                    mutation doThing @serialize(key: [{foo: "bar"}]) {
                         doThing
                     }
                 `,
             });
             extractKey(origOperation);
-        }).toThrow(/@serialize.*key/);
+        }).toThrow(/not allowed in @serialize directive/);
     });
 
-    it('supports literal keys via @serialize', () => {
+    it('supports empty list as key', () => {
         const origOperation = createOperation(undefined, {
             query: gql`
-                mutation doThing @serialize(key: "bar") {
+                mutation doThing @serialize(key: []) {
                     doThing
                 }
             `,
         });
         const { operation, key } = extractKey(origOperation);
 
-        expect(key).toEqual('bar');
+        expect(key).toEqual('[]');
+        expect(operation).not.toBe(origOperation);
+    });
+
+    it('supports literal keys via @serialize', () => {
+        const origOperation = createOperation(undefined, {
+            query: gql`
+                mutation doThing @serialize(key: ["bar"]) {
+                    doThing
+                }
+            `,
+        });
+        const { operation, key } = extractKey(origOperation);
+
+        expect(key).toEqual('["bar"]');
         expect(operation).not.toBe(origOperation);
     });
 
     it('supports direct variables via @serialize', () => {
         const origOperation = createOperation(undefined, {
             query: gql`
-                mutation doThing($var: String) @serialize(key: $var) {
+                mutation doThing($var: String) @serialize(key: [$var]) {
                     doThing
                 }
             `,
@@ -72,14 +88,57 @@ describe('extractKey', () => {
         });
         const { operation, key } = extractKey(origOperation);
 
-        expect(key).toEqual('bar');
+        expect(key).toEqual('["bar"]');
         expect(operation).not.toBe(origOperation);
+    });
+
+    it('supports all allowed types via @serialize', () => {
+        const origOperation = createOperation(undefined, {
+            query: gql`
+                mutation doThing($var: String) @serialize(key: [$var, true, FOO, 5, 6.7, "abc"]) {
+                    doThing
+                }
+            `,
+            variables: {
+                var: 'bar',
+            },
+        });
+        const { operation, key } = extractKey(origOperation);
+
+        expect(key).toEqual('["bar",true,"FOO",5,6.7,"abc"]');
+        expect(operation).not.toBe(origOperation);
+    });
+
+    it('asserts that variable values are supplied', () => {
+        expect(() => {
+            const origOperation = createOperation(undefined, {
+                query: gql`
+                    mutation doThing @serialize(key: [$abc]) {
+                        doThing
+                    }
+                `,
+            });
+            extractKey(origOperation);
+        }).toThrow(/\$abc.*@serialize/);
+    });
+
+    it('asserts that key is of type List', () => {
+        expect(() => {
+            const origOperation = createOperation(undefined, {
+                query: gql`
+                    mutation doThing @serialize(key: "a") {
+                        doThing
+                    }
+                `,
+            });
+            extractKey(origOperation);
+        }).toThrow(/@serialize.*must be of type List/);
     });
 
     it('removes @serialize from the query document', () => {
         const origOperation = createOperation(undefined, {
             query: gql`
-                mutation doThing @serialize(key: "bar") @fizz {
+                mutation doThing @serialize(key: ["bar"]) @fizz {
                     doThing
                 }
             `,
@@ -89,24 +148,6 @@ describe('extractKey', () => {
         const operationNode = operation.query.definitions[0] as OperationDefinitionNode;
         expect(operationNode.directives.length).toEqual(1);
         expect(operationNode.directives[0].name.value).toEqual('fizz');
-    });
-
-    it('interpolates variables within a string', () => {
-        const origOperation = createOperation(undefined, {
-            query: gql`
-                mutation doThing($id: Integer, $oid: String) @serialize(key: "thing:{{id}}:{{oid}}") @fizz {
-                    doThing
-                }
-            `,
-            variables: {
-                id: 123,
-                oid: 'foo',
-            },
-        });
-        const { operation, key } = extractKey(origOperation);
-
-        expect(key).toEqual('thing:123:foo');
-        expect(operation).not.toBe(origOperation);
     });
 
     it('returns the original operation if no serialize directive is present', () => {
@@ -122,4 +163,6 @@ describe('extractKey', () => {
         expect(key).toEqual(undefined);
         expect(operation).toBe(origOperation);
     });
+
+    // Check that it's caching operations
 });

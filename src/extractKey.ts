@@ -1,83 +1,96 @@
 import { createOperation, Operation } from 'apollo-link';
-import { DirectiveNode, ArgumentNode } from 'graphql';
+import {
+    OperationDefinitionNode,
+    DirectiveNode,
+    ListValueNode,
+    ValueNode,
+} from 'graphql';
 
-import deepUpdate = require('deep-update');
+import {
+    checkDocument,
+    removeDirectivesFromDocument,
+    cloneDeep,
+    getOperationDefinitionOrDie,
+    getOperationDefinition,
+} from 'apollo-utilities';
+
+const DIRECTIVE_NAME = 'serialize';
 
 export function extractKey(operation: Operation): { operation: Operation, key?: string } {
-    // Explicit keys in the link context win out.
     const { serializationKey } = operation.getContext();
     if (serializationKey) {
         return { operation, key: serializationKey };
     }
+    // // Explicit keys in the link context win out.
+    // const { serializationKey } = operation.getContext();
+    // if (serializationKey) {
+    //     return { operation, key: serializationKey };
+    // }
 
-    const { directive, path } = extractDirective(operation);
+    // START CACHE by operation.query!!
+
+    checkDocument(operation.query);
+
+    const directive = extractDirective(getOperationDefinitionOrDie(operation.query), DIRECTIVE_NAME);
     if (!directive) {
         return { operation };
     }
     const argument = directive.arguments.find(d => d.name.value === 'key');
     if (!argument) {
-        throw new Error(`The @serialize directive requires a 'key' argument`);
+        throw new Error(`The @${DIRECTIVE_NAME} directive requires a 'key' argument`);
     }
-    let key = valueForArgument(argument, operation.variables);
-    // Replace any {{variable}}s with their value.
-    key = key.replace(/\{\{([^\}]+)\}\}/g, (_substring, name) => {
-        return getVariableOrDie(operation.variables, name);
-    });
+    if (argument.value.kind !== 'ListValue') {
+        throw new Error(`The @${DIRECTIVE_NAME} directive's 'key' argument must be of type List, got ${argument.kind}`);
+    }
+
+    // Clone the document to remove the @serialize directive
+    const docWithoutDirective = cloneDeep(operation.query);
+    const operationDefinition = getOperationDefinition(operation.query);
+    operationDefinition.directives = operationDefinition.directives.filter(node => node.name.value !== DIRECTIVE_NAME);
+
+    // END cached part.
+
+    const key = materializeKey(argument.value, operation.variables);
 
     // Pass through the operation, with the directive removed so that the server
     // doesn't see it.
-    const finalIndex = path.pop();
+    // We also remove any arguments from the operation definition that are unused
+    // after the removal of the directive.
     const newOperation = createOperation(operation.getContext(), {
-        ...operation as any,
-        query: deepUpdate(operation.query, path, {$splice: [[finalIndex, 1]]}),
+        ...operation,
+        query: removeDirectivesFromDocument([{ name: DIRECTIVE_NAME }], operation.query),
     });
 
     return { operation: newOperation, key };
 }
 
-function extractDirective({ query, operationName }: Operation): { directive?: DirectiveNode, path?: string[] } {
-    const path: string[] = [];
-
-    // First, find the operation definition
-    let operationNode;
-    for (let i = 0; i < query.definitions.length; i++) {
-        const node = query.definitions[i];
-        if (node.kind !== 'OperationDefinition') {
-            continue;
-        }
-        if (!operationName || node.name.value === operationName) {
-            operationNode = node;
-            path.push('definitions', `${i}`);
-            break;
-        }
-    }
-
-    // Then, the directive itself.
-    for (let i = 0; i < operationNode.directives.length; i++) {
-        const node = operationNode.directives[i];
-        if (node.name.value === 'serialize') {
-            path.push('directives', `${i}`);
-            return { directive: node, path };
-        }
-    }
-
-    return {};
+function extractDirective(query: OperationDefinitionNode, directiveName: string): DirectiveNode | undefined {
+    return query.directives.filter(node => node.name.value === directiveName)[0];
 }
 
-export function valueForArgument({ value }: ArgumentNode, variables?: Record<string, any>): string {
+export function materializeKey(argumentList: ListValueNode, variables?: Record<string, any>): string {
+    return JSON.stringify(argumentList.values.map(val => valueForArgument(val, variables)));
+}
+
+export function valueForArgument(value: ValueNode, variables?: Record<string, any>): string | number | boolean {
     if (value.kind === 'Variable') {
         return getVariableOrDie(variables, value.name.value);
     }
-    if (value.kind !== 'StringValue') {
-        throw new Error(`values for @serialize(key:) must be strings or variables`);
+    if (value.kind === 'IntValue') {
+        return parseInt(value.value, 10);
     }
-
-    return value.value;
+    if (value.kind === 'FloatValue') {
+        return parseFloat(value.value);
+    }
+    if (value.kind === 'StringValue' || value.kind === 'BooleanValue' || value.kind === 'EnumValue') {
+        return value.value;
+    }
+    throw new Error(`Argument of type ${value.kind} is not allowed in @${DIRECTIVE_NAME} directive`);
 }
 
 export function getVariableOrDie(variables: Record<string, any> | undefined, name: string): any {
     if (!variables || !(name in variables)) {
-        throw new Error(`Expected $${name} to exist for @serialize`);
+        throw new Error(`No value supplied for variable $${name} used in @serialize key`);
     }
     return variables[name];
 }
