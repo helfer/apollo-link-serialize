@@ -4,8 +4,6 @@ import { OperationDefinitionNode, print } from 'graphql';
 
 import { extractKey } from './extractKey';
 
-import { removeDirectivesFromDocument, checkDocument } from 'apollo-utilities';
-
 describe('extractKey', () => {
     it('prefers context.serializationKey if the directive is also supplied', () => {
         const origOperation = createOperation({ serializationKey: 'foo' }, {
@@ -143,11 +141,14 @@ describe('extractKey', () => {
                 }
             `,
         });
-        const { operation, key } = extractKey(origOperation);
+        const expected = gql`
+            mutation doThing @fizz {
+                doThing
+            }
+        `;
+        const { operation } = extractKey(origOperation);
 
-        const operationNode = operation.query.definitions[0] as OperationDefinitionNode;
-        expect(operationNode.directives.length).toEqual(1);
-        expect(operationNode.directives[0].name.value).toEqual('fizz');
+        expect(print(operation.query)).toEqual(print(expected));
     });
 
     it('returns the original operation if no serialize directive is present', () => {
@@ -164,5 +165,29 @@ describe('extractKey', () => {
         expect(operation).toBe(origOperation);
     });
 
-    // Check that it's caching operations
+    it('caches transformed documents', () => {
+        const query = gql`
+            mutation something($var: String) @serialize(key: [$var]) {
+                doThing
+            }
+        `;
+        const firstOperation = createOperation(undefined, {
+            query,
+            variables: {
+                var: 'bar',
+            },
+        });
+        const secondOperation = createOperation(undefined, {
+            query,
+            variables: {
+                var: 'baz',
+            },
+        });
+        const { operation: op1, key: key1 } = extractKey(firstOperation);
+        const { operation: op2, key: key2 } = extractKey(secondOperation);
+
+        expect(key1).toEqual('["bar"]');
+        expect(key2).toEqual('["baz"]');
+        expect(op1.query).toBe(op2.query);
+    });
 });

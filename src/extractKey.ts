@@ -4,6 +4,8 @@ import {
     DirectiveNode,
     ListValueNode,
     ValueNode,
+    DocumentNode,
+    print,
 } from 'graphql';
 
 import {
@@ -16,24 +18,22 @@ import {
 
 const DIRECTIVE_NAME = 'serialize';
 
-export function extractKey(operation: Operation): { operation: Operation, key?: string } {
-    const { serializationKey } = operation.getContext();
-    if (serializationKey) {
-        return { operation, key: serializationKey };
+type DocumentCache = Map<DocumentNode, { doc: DocumentNode, args: ListValueNode }>;
+
+const documentCache: DocumentCache = new Map();
+function extractDirectiveArguments(doc: DocumentNode, cache: DocumentCache = documentCache): {doc: DocumentNode, args?: ListValueNode } {
+    if (cache.has(doc)) {
+        // We cache the transformed document to avoid re-parsing and transforming the same document
+        // over and over again. The cache relies on referential equality between documents. If using
+        // graphql-tag this is a given, so it should work out of the box in most cases.
+        return cache.get(doc);
     }
-    // // Explicit keys in the link context win out.
-    // const { serializationKey } = operation.getContext();
-    // if (serializationKey) {
-    //     return { operation, key: serializationKey };
-    // }
 
-    // START CACHE by operation.query!!
+    checkDocument(doc);
 
-    checkDocument(operation.query);
-
-    const directive = extractDirective(getOperationDefinitionOrDie(operation.query), DIRECTIVE_NAME);
+    const directive = extractDirective(getOperationDefinitionOrDie(doc), DIRECTIVE_NAME);
     if (!directive) {
-        return { operation };
+        return { doc };
     }
     const argument = directive.arguments.find(d => d.name.value === 'key');
     if (!argument) {
@@ -44,13 +44,34 @@ export function extractKey(operation: Operation): { operation: Operation, key?: 
     }
 
     // Clone the document to remove the @serialize directive
-    const docWithoutDirective = cloneDeep(operation.query);
-    const operationDefinition = getOperationDefinition(operation.query);
+    // removeDirectivesFromDocument currently doesn't remove them from operation definitions,
+    // so we do it ourselves here. We still call removeDirectivesFromDocuments to remove arguments
+    // that are unused after having removed the @serialize directive
+    const docWithoutDirective = cloneDeep(doc);
+    const operationDefinition = getOperationDefinition(docWithoutDirective);
     operationDefinition.directives = operationDefinition.directives.filter(node => node.name.value !== DIRECTIVE_NAME);
 
-    // END cached part.
+    const ret = {
+        doc: removeDirectivesFromDocument([{ name: DIRECTIVE_NAME }], docWithoutDirective),
+        args: argument.value,
+    };
+    cache.set(doc, ret);
+    return ret;
+}
 
-    const key = materializeKey(argument.value, operation.variables);
+export function extractKey(operation: Operation): { operation: Operation, key?: string } {
+    const { serializationKey } = operation.getContext();
+    if (serializationKey) {
+        return { operation, key: serializationKey };
+    }
+
+    const { doc, args } = extractDirectiveArguments(operation.query);
+
+    if (!args) {
+        return { operation };
+    }
+
+    const key = materializeKey(args, operation.variables);
 
     // Pass through the operation, with the directive removed so that the server
     // doesn't see it.
@@ -58,7 +79,7 @@ export function extractKey(operation: Operation): { operation: Operation, key?: 
     // after the removal of the directive.
     const newOperation = createOperation(operation.getContext(), {
         ...operation,
-        query: removeDirectivesFromDocument([{ name: DIRECTIVE_NAME }], operation.query),
+        query: doc,
     });
 
     return { operation: newOperation, key };
