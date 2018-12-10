@@ -34,18 +34,18 @@ yarn add apollo-link-serialize
 
 You can indicate requests that should be serialized by providing a serialization key.  All requests with the same serialization key will be queued behind one another in the order they are executed.
 
-The key can be expressed via the `@serialize(key: …)` directive:
+The key can be expressed via the `@serialize(key: …)` directive. The directive takes a `key` argument of type `List`.
 
 ```graphql
-# The key can be a literal string…
-mutation favoriteIsRed @serialize(key: "favoriteColor") {
+# The key can contain a literal string, number, boolean or enum…
+mutation favoriteIsRed @serialize(key: ["favoriteColor"]) {
     setFavoriteColor(color: "RED)
 }
 ```
 
 ```graphql
-# …or it can be a variable in the operation…
-mutation upvotePost($id: ID!) @serialize(key: $id) {
+# …and it can contain variables…
+mutation upvotePost($id: ID!) @serialize(key: [$id]) {
     post(id: $id) {
         addVote
     }
@@ -53,15 +53,15 @@ mutation upvotePost($id: ID!) @serialize(key: $id) {
 ```
 
 ```graphql
-# …and finally, it also supports interpolation:
-mutation upvotePost($id: ID!) @serialize(key: "post:{{id}}") {
+# …and even all of the above mixed together (order matters)…
+mutation upvotePost($id: ID!) @serialize(key: [$id, "color", FOO, true, 17, 5.1]) {
     post(id: $id) {
         addVote
     }
 }
 ```
 
-Additionally, you can also pass an explicit serialization key in the operation's context:
+If none of the above works for you, you can also pass an explicit serialization key in the operation's context:
 
 ```js
 link.execute({
@@ -71,6 +71,9 @@ link.execute({
     },
 });
 ```
+
+We are considering deprecating `serializationKey` and supporting only `@serialize` in future versions of this package. 
+
 
 Requests without a serialization key are executed in parallel.  Similarly, requests with differing keys are executed in parallel with one another.
 
