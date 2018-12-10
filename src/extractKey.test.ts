@@ -1,8 +1,9 @@
 import { createOperation } from 'apollo-link';
 import gql from 'graphql-tag';
-import { OperationDefinitionNode, print } from 'graphql';
+import { OperationDefinitionNode, VariableNode, print } from 'graphql';
 
-import { extractKey } from './extractKey';
+import { extractKey, getAllArgumentsFromSelectionSet, getAllArgumentsFromDocument, getVariablesFromArguments, removeVariableDefinitionsFromDocumentIfUnused } from './extractKey';
+import { getOperationDefinitionOrDie, removeDirectivesFromDocument } from 'apollo-utilities';
 
 describe('extractKey', () => {
     it('prefers context.serializationKey if the directive is also supplied', () => {
@@ -151,6 +152,45 @@ describe('extractKey', () => {
         expect(print(operation.query)).toEqual(print(expected));
     });
 
+    it('removes arguments that are only used for @serialize from the query document', () => {
+        const origOperation = createOperation(undefined, {
+            query: gql`
+                mutation doThing($key: String!, $foo: Int) @serialize(key: [$key, $foo]) {
+                    doThing(foo: $foo)
+                }
+            `,
+            variables: { key: 'a', foo: 'b' },
+        });
+        const expected = gql`
+            mutation doThing($foo: Int) {
+                doThing(foo: $foo)
+            }
+        `;
+        const { operation } = extractKey(origOperation);
+
+        expect(print(operation.query)).toEqual(print(expected));
+    });
+
+    it('getAllArgumentsFromDocument', () => {
+        const query = gql`
+            mutation doThing($id: ID!) @serialize(key: [$key, "4", 3]) {
+                doSome
+                doThing(a: $id) @connection(key2: $key2)
+                ...Foo @obj(o: { a: { in: [$key3] } out: $key4 })
+            }
+
+            fragment Foo on Doctor {
+                abc(b: $hihi) {
+                    nested(c: $nested)
+                }
+            }
+        `;
+        const expected = ['key', 'id', 'key2', 'key3', 'key4', 'hihi', 'nested'].sort();
+        const vars = getVariablesFromArguments(getAllArgumentsFromDocument(query));
+
+        expect(vars.map(v => v.name.value).sort()).toEqual(expected);
+    });
+
     it('returns the original operation if no serialize directive is present', () => {
         const origOperation = createOperation({}, {
             query: gql`
@@ -189,5 +229,44 @@ describe('extractKey', () => {
         expect(key1).toEqual('["bar"]');
         expect(key2).toEqual('["baz"]');
         expect(op1.query).toBe(op2.query);
+    });
+});
+
+describe('removeVariableDefinitionsFromDocumentIfUnused', () => {
+    it('removes variables from definition that are not used', () => {
+        const query = gql`
+            mutation doThing($id: ID!, $key: Int, $key2: String, $key3: ENUMx) {
+                something
+            }
+        `;
+        const expected = gql`
+            mutation doThing {
+                something
+            }
+        `;
+        const keys = ['key', 'id', 'key2', 'key3', 'key4', 'hihi', 'nested'];
+        removeVariableDefinitionsFromDocumentIfUnused(keys, query);
+
+        expect(print(query)).toEqual(print(expected));
+    });
+
+    it('does not remove variable definitions for variables that are used', () => {
+        const query = gql`
+            mutation doThing($bool: Booolean!, $id: ID!, $key2: String, $hihi: Int, $nested: ENUM1) {
+                doSome
+                doThing(a: $id) @connection(key2: $key2)
+                ...Foo @skip(if: $bool)
+            }
+
+            fragment Foo on Doctor {
+                abc(b: $hihi) {
+                    nested(c: $nested)
+                }
+            }
+        `;
+        const keys = ['key', 'id', 'key2', 'key3', 'key4', 'hihi', 'nested'];
+        removeVariableDefinitionsFromDocumentIfUnused(keys, query);
+
+        expect(print(query)).toEqual(print(query));
     });
 });
