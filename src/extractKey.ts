@@ -78,7 +78,7 @@ export function extractKey(operation: Operation): { operation: Operation, key?: 
     // We also remove any arguments from the operation definition that are unused
     // after the removal of the directive.
     const newOperation = createOperation(operation.getContext(), {
-        ...operation,
+        ...operation as any,
         query: doc,
     });
 
