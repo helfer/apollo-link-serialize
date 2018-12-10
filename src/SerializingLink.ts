@@ -7,6 +7,8 @@ import {
 } from 'apollo-link';
 import { Observer } from 'zen-observable-ts';
 
+import { extractKey } from './extractKey';
+
 export interface OperationQueueEntry {
     operation: Operation;
     forward: NextLink;
@@ -20,11 +22,12 @@ export interface OperationQueueEntry {
 export default class SerializingLink extends ApolloLink {
     private opQueues: { [key: string]: OperationQueueEntry[] } = {};
 
-    public request(operation: Operation, forward: NextLink) {
-        if (!operation.getContext().serializationKey) {
+    public request(origOperation: Operation, forward: NextLink) {
+        const { operation, key } = extractKey(origOperation);
+        if (!key) {
             return forward(operation);
         }
-        const key = operation.getContext().serializationKey;
+
         return new Observable(observer => {
             const entry = { operation, forward, observer };
             this.enqueue(key, entry);
@@ -49,9 +52,7 @@ export default class SerializingLink extends ApolloLink {
 
     // Cancel the operation by removing it from the queue and unsubscribing if it is currently in progress.
     private cancelOp = (key: string, entryToRemove: OperationQueueEntry) => {
-        if (!this.opQueues[key]) {
-            return;
-        }
+        if (!this.opQueues[key]) { /* should never happen */ return; }
         const idx = this.opQueues[key].findIndex(entry => entryToRemove === entry);
 
         if (idx >= 0) {
