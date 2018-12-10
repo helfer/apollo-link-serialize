@@ -95,7 +95,7 @@ this.link = ApolloLink.from([
 // Assume the server/network delay for this request is 100ms
 const opColor = {
     query: gql`
-        mutation favoriteIsRed @serialize(key: "favoriteColor") {
+        mutation favoriteIsRed @serialize(key: ["favoriteColor"]) {
             setFavoriteColor(color: "RED")
         }
     `,
@@ -104,7 +104,7 @@ const opColor = {
 // Assume the server/network delay for this request is 10ms
 const opColor2 = {
     query: gql`
-        mutation favoriteIsBlue @serialize(key: "favoriteColor") {
+        mutation favoriteIsBlue @serialize(key: ["favoriteColor"]) {
             setFavoriteColor(color: "BLUE")
         }
     `,
@@ -113,7 +113,7 @@ const opColor2 = {
 // Assume the server/network delay for this request is 50ms
 const opNumber = {
     query: gql`
-        mutation favoriteIsSeven @serialize(key: "favoriteNumber") {
+        mutation favoriteIsSeven @serialize(key: ["favoriteNumber"]) {
             setFavoriteNumber(number: 7)
         }
     `,
