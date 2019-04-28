@@ -70,10 +70,7 @@ link.execute({
         serializationKey: 'favoriteColor',
     },
 });
-```
-
-We are considering deprecating `serializationKey` and supporting only `@serialize` in future versions of this package. 
-
+``` 
 
 Requests without a serialization key are executed in parallel.  Similarly, requests with differing keys are executed in parallel with one another.
 
