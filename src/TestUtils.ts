@@ -3,7 +3,7 @@ import {
     Operation,
     Observable,
     NextLink,
-} from 'apollo-link';
+} from '@apollo/client/core';
 import {
     ExecutionResult,
 } from 'graphql';
