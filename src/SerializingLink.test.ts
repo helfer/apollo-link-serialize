@@ -4,8 +4,8 @@ import {
   from,
   gql,
   GraphQLRequest,
-} from "@apollo/client/core";
-import SerializingLink from "./SerializingLink";
+} from '@apollo/client/core';
+import SerializingLink from './SerializingLink';
 import {
   assertObservableSequence,
   mergeObservables,
@@ -13,27 +13,27 @@ import {
   TestSequenceLink,
   toResultValue,
   Unsubscribable,
-} from "./TestUtils";
+} from './TestUtils';
 
 // TODO: Reduce test boilerplate code
 // TODO: Consolidate test utilities
-describe("SerializingLink", () => {
+describe('SerializingLink', () => {
   let link: ApolloLink;
   let testLink: TestSequenceLink;
 
   const testResponse = {
     data: {
-      hello: "World",
+      hello: 'World',
     },
   };
 
   const testSequence = [
     {
-      type: "next",
+      type: 'next',
       value: testResponse,
     },
     {
-      type: "complete",
+      type: 'complete',
     },
   ];
 
@@ -44,7 +44,7 @@ describe("SerializingLink", () => {
       }
     `,
     context: {
-      serializationKey: "key1",
+      serializationKey: 'key1',
       testSequence,
     },
   };
@@ -55,10 +55,10 @@ describe("SerializingLink", () => {
     link = from([new SerializingLink(), testLink]);
   });
 
-  it("forwards the operation", () => {
+  it('forwards the operation', () => {
     return new Promise<void>((resolve, reject) => {
       execute(link, op).subscribe({
-        next: (data) => undefined,
+        next: () => undefined,
         error: (error) => reject(error),
         complete: () => {
           expect(testLink.operations.length).toBe(1);
@@ -69,7 +69,7 @@ describe("SerializingLink", () => {
       jest.runAllTimers();
     });
   });
-  it("forwards the operation if context.serializationKey is not defined", () => {
+  it('forwards the operation if context.serializationKey is not defined', () => {
     const opWithoutKey: GraphQLRequest = {
       query: gql`
         {
@@ -82,7 +82,7 @@ describe("SerializingLink", () => {
     };
     return new Promise<void>((resolve, reject) => {
       execute(link, opWithoutKey).subscribe({
-        next: (data) => undefined,
+        next: () => undefined,
         error: (error) => reject(error),
         complete: () => {
           expect(testLink.operations.length).toBe(1);
@@ -93,17 +93,17 @@ describe("SerializingLink", () => {
       jest.runAllTimers();
     });
   });
-  it("calls next and complete as expected", () => {
+  it('calls next and complete as expected', () => {
     return Promise.resolve(
       assertObservableSequence(
         execute(link, op),
-        [{ type: "next", value: testResponse }, { type: "complete" }],
+        [{ type: 'next', value: testResponse }, { type: 'complete' }],
         () => jest.runAllTimers()
       )
     );
   });
-  it("passes through errors", () => {
-    const testError = new Error("Hello darkness my old friend");
+  it('passes through errors', () => {
+    const testError = new Error('Hello darkness my old friend');
     const opWithError: GraphQLRequest = {
       query: gql`
         {
@@ -111,27 +111,27 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "key1",
-        testSequence: [{ type: "error", value: testError }],
+        serializationKey: 'key1',
+        testSequence: [{ type: 'error', value: testError }],
       },
     };
     return Promise.resolve(
       assertObservableSequence(
         execute(link, opWithError),
-        [{ type: "error", value: testError }],
+        [{ type: 'error', value: testError }],
         () => jest.runAllTimers()
       )
     );
   });
-  it("does not block queries with different serializationKey", () => {
+  it('does not block queries with different serializationKey', () => {
     const ts1: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 2,
-        value: { data: { q1: "one" } },
+        value: { data: { q1: 'one' } },
       },
       {
-        type: "complete",
+        type: 'complete',
         delay: 2,
       },
     ];
@@ -142,18 +142,18 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "1",
+        serializationKey: '1',
         testSequence: ts1,
       },
     };
     const ts2: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 1,
-        value: { data: { q2: "two" } },
+        value: { data: { q2: 'two' } },
       },
       {
-        type: "complete",
+        type: 'complete',
         delay: 1,
       },
     ];
@@ -164,7 +164,7 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "2",
+        serializationKey: '2',
         testSequence: ts2,
       },
     };
@@ -177,18 +177,18 @@ describe("SerializingLink", () => {
     );
   });
 
-  it("blocks queries with identical serializationKey", () => {
+  it('blocks queries with identical serializationKey', () => {
     // make two queries with same key
     // first query returns slower than second, but runs first
     // make sure second query never called.
     const ts1: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 2,
-        value: { data: { q1: "one" } },
+        value: { data: { q1: 'one' } },
       },
       {
-        type: "complete",
+        type: 'complete',
         delay: 2,
       },
     ];
@@ -199,18 +199,18 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "A",
+        serializationKey: 'A',
         testSequence: ts1,
       },
     };
     const ts2: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 1,
-        value: { data: { q2: "two" } },
+        value: { data: { q2: 'two' } },
       },
       {
-        type: "complete",
+        type: 'complete',
         delay: 1,
       },
     ];
@@ -221,7 +221,7 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "A",
+        serializationKey: 'A',
         testSequence: ts2,
       },
     };
@@ -234,19 +234,19 @@ describe("SerializingLink", () => {
     );
   });
 
-  it("unblocks queue if first query errors", () => {
+  it('unblocks queue if first query errors', () => {
     // two with same key
     // first query returns one result, then errors.
     // second query must run (after first)
     const ts1: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 2,
-        value: { data: { q1: "one" } },
+        value: { data: { q1: 'one' } },
       },
       {
-        type: "error",
-        value: new Error("oops"),
+        type: 'error',
+        value: new Error('oops'),
         delay: 2,
       },
     ];
@@ -257,18 +257,18 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "A",
+        serializationKey: 'A',
         testSequence: ts1,
       },
     };
     const ts2: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 1,
-        value: { data: { q2: "two" } },
+        value: { data: { q2: 'two' } },
       },
       {
-        type: "complete",
+        type: 'complete',
         delay: 1,
       },
     ];
@@ -279,7 +279,7 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "A",
+        serializationKey: 'A',
         testSequence: ts2,
       },
     };
@@ -301,15 +301,15 @@ describe("SerializingLink", () => {
     ]);
   });
 
-  it("unblocks queue if first query is unsubscribed from", () => {
+  it('unblocks queue if first query is unsubscribed from', () => {
     // two with same key
     // first query never returns result, is unsubscribed from soon after starting
     // second query must run
     const ts1: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 2,
-        value: { data: { q1: "one" } },
+        value: { data: { q1: 'one' } },
       },
     ];
     const op1: GraphQLRequest = {
@@ -318,20 +318,20 @@ describe("SerializingLink", () => {
           q1
         }
       `,
-      operationName: "op1",
+      operationName: 'op1',
       context: {
-        serializationKey: "A",
+        serializationKey: 'A',
         testSequence: ts1,
       },
     };
     const ts2: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 1,
-        value: { data: { q2: "two" } },
+        value: { data: { q2: 'two' } },
       },
       {
-        type: "complete",
+        type: 'complete',
         delay: 1,
       },
     ];
@@ -341,9 +341,9 @@ describe("SerializingLink", () => {
           q2
         }
       `,
-      operationName: "op2",
+      operationName: 'op2',
       context: {
-        serializationKey: "A",
+        serializationKey: 'A',
         testSequence: ts2,
       },
     };
@@ -367,18 +367,18 @@ describe("SerializingLink", () => {
       ),
     ]);
   });
-  it("only enqueue one subsequent query on complete of first", () => {
+  it('only enqueue one subsequent query on complete of first', () => {
     // make three queries with same key
     // second query returns slower than thirds, but runs first
     // make sure third query completes after second
     const ts1: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 2,
-        value: { data: { q1: "one" } },
+        value: { data: { q1: 'one' } },
       },
       {
-        type: "complete",
+        type: 'complete',
         delay: 2,
       },
     ];
@@ -389,18 +389,18 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "A",
+        serializationKey: 'A',
         testSequence: ts1,
       },
     };
     const ts2: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 3,
-        value: { data: { q2: "two" } },
+        value: { data: { q2: 'two' } },
       },
       {
-        type: "complete",
+        type: 'complete',
         delay: 3,
       },
     ];
@@ -411,18 +411,18 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "A",
+        serializationKey: 'A',
         testSequence: ts2,
       },
     };
     const ts3: ObservableEvent[] = [
       {
-        type: "next",
+        type: 'next',
         delay: 1,
-        value: { data: { q3: "three" } },
+        value: { data: { q3: 'three' } },
       },
       {
-        type: "complete",
+        type: 'complete',
         delay: 1,
       },
     ];
@@ -433,7 +433,7 @@ describe("SerializingLink", () => {
         }
       `,
       context: {
-        serializationKey: "A",
+        serializationKey: 'A',
         testSequence: ts3,
       },
     };

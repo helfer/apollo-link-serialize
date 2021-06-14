@@ -4,13 +4,13 @@ import {
   Observable,
   Observer,
   Operation,
-} from "@apollo/client/core";
-import { ExecutionResult } from "graphql";
+} from '@apollo/client/core';
+import { ExecutionResult } from 'graphql';
 
 export interface ObservableValue {
   value?: ExecutionResult | Error;
   delay?: number;
-  type: "next" | "error" | "complete";
+  type: 'next' | 'error' | 'complete';
 }
 
 export interface Unsubscribable {
@@ -18,19 +18,19 @@ export interface Unsubscribable {
 }
 
 export interface NextEvent {
-  type: "next";
+  type: 'next';
   delay?: number;
   value: ExecutionResult;
 }
 
 export interface ErrorEvent {
-  type: "error";
+  type: 'error';
   delay?: number;
   value: Error;
 }
 
 export interface CompleteEvent {
-  type: "complete";
+  type: 'complete';
   delay?: number;
 }
 
@@ -72,14 +72,14 @@ export class TestSequenceLink extends ApolloLink {
     // TODO(helfer): Throw an error if neither testError nor testResponse is defined
     return new Observable((observer: Observer<ExecutionResult>) => {
       operation.getContext().testSequence.forEach((event: ObservableEvent) => {
-        if (event.type === "error") {
+        if (event.type === 'error') {
           setTimeout(() => observer.error(event.value), event.delay || 0);
           return;
         }
-        if (event.type === "next") {
+        if (event.type === 'next') {
           setTimeout(() => observer.next(event.value), event.delay || 0);
         }
-        if (event.type === "complete") {
+        if (event.type === 'complete') {
           setTimeout(() => observer.complete(), event.delay || 0);
         }
       });
@@ -122,19 +122,19 @@ export const assertObservableSequence = (
 ): Promise<boolean | Error> => {
   let index = 0;
   if (sequence.length === 0) {
-    throw new Error("Observable sequence must have at least one element");
+    throw new Error('Observable sequence must have at least one element');
   }
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const sub = observable.subscribe({
       next: (value: ExecutionResult) => {
-        expect({ type: "next", value }).toEqual(sequence[index]);
+        expect({ type: 'next', value }).toEqual(sequence[index]);
         index++;
         if (index === sequence.length) {
           resolve(true);
         }
       },
       error: (value: any) => {
-        expect({ type: "error", value }).toEqual(sequence[index]);
+        expect({ type: 'error', value }).toEqual(sequence[index]);
         index++;
         // This check makes sure that there is no next element in
         // the sequence. If there is, it will print a somewhat useful error
@@ -142,7 +142,7 @@ export const assertObservableSequence = (
         resolve(true);
       },
       complete: () => {
-        expect({ type: "complete" }).toEqual(sequence[index]);
+        expect({ type: 'complete' }).toEqual(sequence[index]);
         index++;
         // This check makes sure that there is no next element in
         // the sequence. If there is, it will print a somewhat useful error

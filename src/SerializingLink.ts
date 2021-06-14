@@ -4,9 +4,9 @@ import {
   NextLink,
   Observable,
   Operation,
-} from "@apollo/client/core";
-import { Observer } from "zen-observable-ts";
-import { extractKey } from "./extractKey";
+} from '@apollo/client/core';
+import { Observer } from 'zen-observable-ts';
+import { extractKey } from './extractKey';
 
 export interface OperationQueueEntry {
   operation: Operation;

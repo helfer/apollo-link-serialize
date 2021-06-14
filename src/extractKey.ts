@@ -1,10 +1,10 @@
-import { Operation } from "@apollo/client/core";
-import { createOperation } from "@apollo/client/link/utils";
+import { Operation } from '@apollo/client/core';
+import { createOperation } from '@apollo/client/link/utils';
 import {
   checkDocument,
   cloneDeep,
   getOperationDefinition,
-} from "@apollo/client/utilities";
+} from '@apollo/client/utilities';
 import {
   ArgumentNode,
   DirectiveNode,
@@ -16,9 +16,9 @@ import {
   SelectionSetNode,
   ValueNode,
   VariableNode,
-} from "graphql";
+} from 'graphql';
 
-const DIRECTIVE_NAME = "serialize";
+const DIRECTIVE_NAME = 'serialize';
 
 type DocumentCache = Map<
   DocumentNode,
@@ -46,13 +46,13 @@ function extractDirectiveArguments(
   if (!directive) {
     return { doc };
   }
-  const argument = directive.arguments.find((d) => d.name.value === "key");
+  const argument = directive.arguments.find((d) => d.name.value === 'key');
   if (!argument) {
     throw new Error(
       `The @${DIRECTIVE_NAME} directive requires a 'key' argument`
     );
   }
-  if (argument.value.kind !== "ListValue") {
+  if (argument.value.kind !== 'ListValue') {
     throw new Error(
       `The @${DIRECTIVE_NAME} directive's 'key' argument must be of type List, got ${argument.kind}`
     );
@@ -117,19 +117,19 @@ export function valueForArgument(
   value: ValueNode,
   variables?: Record<string, any>
 ): string | number | boolean {
-  if (value.kind === "Variable") {
+  if (value.kind === 'Variable') {
     return getVariableOrDie(variables, value.name.value);
   }
-  if (value.kind === "IntValue") {
+  if (value.kind === 'IntValue') {
     return parseInt(value.value, 10);
   }
-  if (value.kind === "FloatValue") {
+  if (value.kind === 'FloatValue') {
     return parseFloat(value.value);
   }
   if (
-    value.kind === "StringValue" ||
-    value.kind === "BooleanValue" ||
-    value.kind === "EnumValue"
+    value.kind === 'StringValue' ||
+    value.kind === 'BooleanValue' ||
+    value.kind === 'EnumValue'
   ) {
     return value.value;
   }
@@ -202,7 +202,7 @@ export function getAllArgumentsFromSelection(
   }
 
   let args = getAllArgumentsFromDirectives(selection.directives);
-  if (selection.kind === "Field") {
+  if (selection.kind === 'Field') {
     args = args.concat(selection.arguments || []);
     args = args.concat(getAllArgumentsFromSelectionSet(selection.selectionSet));
   }
@@ -222,9 +222,9 @@ export function getAllArgumentsFromDirectives(
 export function getAllArgumentsFromDocument(doc: DocumentNode): ArgumentNode[] {
   return doc.definitions
     .map((def) => {
-      if (def.kind === "FragmentDefinition") {
+      if (def.kind === 'FragmentDefinition') {
         return getAllArgumentsFromFragment(def);
-      } else if (def.kind === "OperationDefinition") {
+      } else if (def.kind === 'OperationDefinition') {
         return getAllArgumentsFromOperation(def);
       } else {
         return [];
@@ -261,15 +261,15 @@ export function getVariablesFromArguments(
 
 export function getVariablesFromValueNode(node: ValueNode): VariableNode[] {
   switch (node.kind) {
-    case "Variable":
+    case 'Variable':
       return [node];
 
-    case "ListValue":
+    case 'ListValue':
       return node.values
         .map(getVariablesFromValueNode)
         .reduce((a, b) => a.concat(b), []);
 
-    case "ObjectValue":
+    case 'ObjectValue':
       return node.fields
         .map((f) => f.value)
         .map(getVariablesFromValueNode)

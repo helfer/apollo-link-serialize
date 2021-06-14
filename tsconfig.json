@@ -1,20 +1,16 @@
 {
-    "compilerOptions": {
-        "declaration": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "noImplicitAny": true,
-        "lib": ["esnext"],
-        "removeComments": true,
-        "preserveConstEnums": true,
-        "outDir": "build/dist",
-        "sourceMap": true
-    },
-    "include": [
-        "src/**/*"
-    ],
-    "exclude": [
-        "node_modules",
-        "**/*.test.ts"
-    ]
+  "compilerOptions": {
+    "declaration": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "lib": ["esnext"],
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outDir": "build/dist",
+    "sourceMap": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.test.ts"]
 }

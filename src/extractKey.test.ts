@@ -1,17 +1,17 @@
-import { gql } from "@apollo/client/core";
-import { createOperation } from "@apollo/client/link/utils";
-import { print } from "graphql";
+import { gql } from '@apollo/client/core';
+import { createOperation } from '@apollo/client/link/utils';
+import { print } from 'graphql';
 import {
   extractKey,
   getAllArgumentsFromDocument,
   getVariablesFromArguments,
   removeVariableDefinitionsFromDocumentIfUnused,
-} from "./extractKey";
+} from './extractKey';
 
-describe("extractKey", () => {
-  it("prefers context.serializationKey if the directive is also supplied", () => {
+describe('extractKey', () => {
+  it('prefers context.serializationKey if the directive is also supplied', () => {
     const origOperation = createOperation(
-      { serializationKey: "foo" },
+      { serializationKey: 'foo' },
       {
         query: gql`
           mutation doThing @serialize(key: "bar") {
@@ -22,11 +22,11 @@ describe("extractKey", () => {
     );
     const { operation, key } = extractKey(origOperation);
 
-    expect(key).toEqual("foo");
+    expect(key).toEqual('foo');
     expect(operation).toBe(origOperation);
   });
 
-  it("asserts that the key argument is present", () => {
+  it('asserts that the key argument is present', () => {
     expect(() => {
       const origOperation = createOperation(undefined, {
         query: gql`
@@ -39,7 +39,7 @@ describe("extractKey", () => {
     }).toThrow(/@serialize.*key/);
   });
 
-  it("asserts that the key argument is of valid type", () => {
+  it('asserts that the key argument is of valid type', () => {
     expect(() => {
       const origOperation = createOperation(undefined, {
         query: gql`
@@ -52,7 +52,7 @@ describe("extractKey", () => {
     }).toThrow(/not allowed in @serialize directive/);
   });
 
-  it("supports empty list as key", () => {
+  it('supports empty list as key', () => {
     const origOperation = createOperation(undefined, {
       query: gql`
         mutation doThing @serialize(key: []) {
@@ -62,11 +62,11 @@ describe("extractKey", () => {
     });
     const { operation, key } = extractKey(origOperation);
 
-    expect(key).toEqual("[]");
+    expect(key).toEqual('[]');
     expect(operation).not.toBe(origOperation);
   });
 
-  it("supports literal keys via @serialize", () => {
+  it('supports literal keys via @serialize', () => {
     const origOperation = createOperation(undefined, {
       query: gql`
         mutation doThing @serialize(key: ["bar"]) {
@@ -80,7 +80,7 @@ describe("extractKey", () => {
     expect(operation).not.toBe(origOperation);
   });
 
-  it("supports direct variables via @serialize", () => {
+  it('supports direct variables via @serialize', () => {
     const origOperation = createOperation(undefined, {
       query: gql`
         mutation doThing($var: String) @serialize(key: [$var]) {
@@ -88,7 +88,7 @@ describe("extractKey", () => {
         }
       `,
       variables: {
-        var: "bar",
+        var: 'bar',
       },
     });
     const { operation, key } = extractKey(origOperation);
@@ -97,7 +97,7 @@ describe("extractKey", () => {
     expect(operation).not.toBe(origOperation);
   });
 
-  it("supports all allowed types via @serialize", () => {
+  it('supports all allowed types via @serialize', () => {
     const origOperation = createOperation(undefined, {
       query: gql`
         mutation doThing($var: String)
@@ -106,7 +106,7 @@ describe("extractKey", () => {
         }
       `,
       variables: {
-        var: "bar",
+        var: 'bar',
       },
     });
     const { operation, key } = extractKey(origOperation);
@@ -115,7 +115,7 @@ describe("extractKey", () => {
     expect(operation).not.toBe(origOperation);
   });
 
-  it("asserts that variable values are supplied", () => {
+  it('asserts that variable values are supplied', () => {
     expect(() => {
       const origOperation = createOperation(undefined, {
         query: gql`
@@ -128,7 +128,7 @@ describe("extractKey", () => {
     }).toThrow(/\$abc.*@serialize/);
   });
 
-  it("asserts that key is of type List", () => {
+  it('asserts that key is of type List', () => {
     expect(() => {
       const origOperation = createOperation(undefined, {
         query: gql`
@@ -141,7 +141,7 @@ describe("extractKey", () => {
     }).toThrow(/@serialize.*must be of type List/);
   });
 
-  it("removes @serialize from the query document", () => {
+  it('removes @serialize from the query document', () => {
     const origOperation = createOperation(undefined, {
       query: gql`
         mutation doThing @serialize(key: ["bar"]) @fizz {
@@ -159,7 +159,7 @@ describe("extractKey", () => {
     expect(print(operation.query)).toEqual(print(expected));
   });
 
-  it("removes arguments that are only used for @serialize from the query document", () => {
+  it('removes arguments that are only used for @serialize from the query document', () => {
     const origOperation = createOperation(undefined, {
       query: gql`
         mutation doThing($key: String!, $foo: Int)
@@ -167,7 +167,7 @@ describe("extractKey", () => {
           doThing(foo: $foo)
         }
       `,
-      variables: { key: "a", foo: "b" },
+      variables: { key: 'a', foo: 'b' },
     });
     const expected = gql`
       mutation doThing($foo: Int) {
@@ -179,7 +179,7 @@ describe("extractKey", () => {
     expect(print(operation.query)).toEqual(print(expected));
   });
 
-  it("getAllArgumentsFromDocument", () => {
+  it('getAllArgumentsFromDocument', () => {
     const query = gql`
       mutation doThing($id: ID!) @serialize(key: [$key, "4", 3]) {
         doSome
@@ -194,20 +194,20 @@ describe("extractKey", () => {
       }
     `;
     const expected = [
-      "key",
-      "id",
-      "key2",
-      "key3",
-      "key4",
-      "hihi",
-      "nested",
+      'key',
+      'id',
+      'key2',
+      'key3',
+      'key4',
+      'hihi',
+      'nested',
     ].sort();
     const vars = getVariablesFromArguments(getAllArgumentsFromDocument(query));
 
     expect(vars.map((v) => v.name.value).sort()).toEqual(expected);
   });
 
-  it("returns the original operation if no serialize directive is present", () => {
+  it('returns the original operation if no serialize directive is present', () => {
     const origOperation = createOperation(
       {},
       {
@@ -224,7 +224,7 @@ describe("extractKey", () => {
     expect(operation).toBe(origOperation);
   });
 
-  it("caches transformed documents", () => {
+  it('caches transformed documents', () => {
     const query = gql`
       mutation something($var: String) @serialize(key: [$var]) {
         doThing
@@ -233,13 +233,13 @@ describe("extractKey", () => {
     const firstOperation = createOperation(undefined, {
       query,
       variables: {
-        var: "bar",
+        var: 'bar',
       },
     });
     const secondOperation = createOperation(undefined, {
       query,
       variables: {
-        var: "baz",
+        var: 'baz',
       },
     });
     const { operation: op1, key: key1 } = extractKey(firstOperation);
@@ -251,8 +251,8 @@ describe("extractKey", () => {
   });
 });
 
-describe("removeVariableDefinitionsFromDocumentIfUnused", () => {
-  it("removes variables from definition that are not used", () => {
+describe('removeVariableDefinitionsFromDocumentIfUnused', () => {
+  it('removes variables from definition that are not used', () => {
     const query = gql`
       mutation doThing($id: ID!, $key: Int, $key2: String, $key3: ENUMx) {
         something
@@ -263,13 +263,13 @@ describe("removeVariableDefinitionsFromDocumentIfUnused", () => {
         something
       }
     `;
-    const keys = ["key", "id", "key2", "key3", "key4", "hihi", "nested"];
+    const keys = ['key', 'id', 'key2', 'key3', 'key4', 'hihi', 'nested'];
     removeVariableDefinitionsFromDocumentIfUnused(keys, query);
 
     expect(print(query)).toEqual(print(expected));
   });
 
-  it("does not remove variable definitions for variables that are used", () => {
+  it('does not remove variable definitions for variables that are used', () => {
     const query = gql`
       mutation doThing(
         $bool: Boolean!
@@ -289,7 +289,7 @@ describe("removeVariableDefinitionsFromDocumentIfUnused", () => {
         }
       }
     `;
-    const keys = ["key", "id", "key2", "key3", "key4", "hihi", "nested"];
+    const keys = ['key', 'id', 'key2', 'key3', 'key4', 'hihi', 'nested'];
     removeVariableDefinitionsFromDocumentIfUnused(keys, query);
 
     expect(print(query)).toEqual(print(query));
