@@ -1,9 +1,9 @@
-import { createOperation } from 'apollo-link';
-import gql from 'graphql-tag';
-import { OperationDefinitionNode, VariableNode, print } from 'graphql';
+import { gql } from '@apollo/client/core';
+import { createOperation } from '@apollo/client/link/utils';
+import {  print } from 'graphql';
 
-import { extractKey, getAllArgumentsFromSelectionSet, getAllArgumentsFromDocument, getVariablesFromArguments, removeVariableDefinitionsFromDocumentIfUnused } from './extractKey';
-import { getOperationDefinitionOrDie, removeDirectivesFromDocument } from 'apollo-utilities';
+import { extractKey, getAllArgumentsFromDocument, getVariablesFromArguments, removeVariableDefinitionsFromDocumentIfUnused } from './extractKey';
+
 
 describe('extractKey', () => {
     it('prefers context.serializationKey if the directive is also supplied', () => {

@@ -1,10 +1,4 @@
-import {
-    ApolloLink,
-    Observable,
-    Operation,
-    NextLink,
-    FetchResult,
-} from 'apollo-link';
+import { ApolloLink, FetchResult, NextLink, Observable, Operation } from '@apollo/client/core';
 import { Observer } from 'zen-observable-ts';
 
 import { extractKey } from './extractKey';
@@ -28,7 +22,7 @@ export default class SerializingLink extends ApolloLink {
             return forward(operation);
         }
 
-        return new Observable(observer => {
+        return new Observable((observer:Observer<FetchResult>) => {
             const entry = { operation, forward, observer };
             this.enqueue(key, entry);
 
@@ -76,7 +70,7 @@ export default class SerializingLink extends ApolloLink {
         const { operation, forward, observer, subscription } = this.opQueues[key][0];
         if (subscription) { return; }
         this.opQueues[key][0].subscription = forward(operation).subscribe({
-            next: (v) => observer.next && observer.next(v),
+            next: (v: FetchResult) => observer.next && observer.next(v),
             error: (e: Error) => {
                 if (observer.error) { observer.error(e); }
             },
