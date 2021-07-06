@@ -22,7 +22,7 @@ export default class SerializingLink extends ApolloLink {
             return forward(operation);
         }
 
-        return new Observable((observer:Observer<FetchResult>) => {
+        return new Observable((observer: Observer<FetchResult>) => {
             const entry = { operation, forward, observer };
             this.enqueue(key, entry);
 
