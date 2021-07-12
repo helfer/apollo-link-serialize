@@ -1,11 +1,3 @@
-import {
-    ApolloLink,
-    execute,
-    from,
-    gql,
-    GraphQLRequest,
-  } from '@apollo/client/core';
-
 import SerializingLink from './SerializingLink';
 import {
     TestSequenceLink,
@@ -13,9 +5,22 @@ import {
     toResultValue,
     assertObservableSequence,
     mergeObservables,
-    Unsubscribable,
 } from './TestUtils';
+import {
+    execute,
+    GraphQLRequest,
+    ApolloLink,
+    NextLink,
+    Operation,
+    Observable,
+    Subscription,
+} from 'apollo-link';
 
+import {
+    ExecutionResult,
+} from 'graphql';
+
+import gql from 'graphql-tag';
 
 // TODO: Reduce test boilerplate code
 // TODO: Consolidate test utilities
@@ -54,7 +59,7 @@ describe('SerializingLink', () => {
     });
 
     it('forwards the operation', () => {
-        return new Promise<void>((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             execute(link, op).subscribe({
                 next: (data) => undefined,
                 error: (error) => reject(error),
@@ -74,7 +79,7 @@ describe('SerializingLink', () => {
                 testSequence,
             },
         };
-        return new Promise<void>((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             execute(link, opWithoutKey).subscribe({
                 next: (data) => undefined,
                 error: (error) => reject(error),
@@ -308,7 +313,7 @@ describe('SerializingLink', () => {
             Promise.resolve(assertObservableSequence(
                 execute(link, op1),
                 [...(ts1.map(toResultValue))],
-                (sub: Unsubscribable) => {
+                (sub: Subscription) => {
                     setTimeout(() => sub.unsubscribe(), 5);
                     jest.runAllTimers();
                 })),

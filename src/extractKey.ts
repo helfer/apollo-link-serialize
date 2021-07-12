@@ -1,22 +1,27 @@
-import { Operation } from '@apollo/client/core';
-import { createOperation } from '@apollo/client/link/utils';
-import {
-  checkDocument,
-  cloneDeep,
-  getOperationDefinition,
-} from '@apollo/client/utilities';
+import { createOperation, Operation } from 'apollo-link';
 import {
     OperationDefinitionNode,
     DirectiveNode,
     ListValueNode,
     ValueNode,
     DocumentNode,
+    print,
     SelectionSetNode,
     ArgumentNode,
     SelectionNode,
+    FieldNode,
+    DirectiveLocation,
     FragmentDefinitionNode,
     VariableNode,
 } from 'graphql';
+
+import {
+    checkDocument,
+    removeDirectivesFromDocument,
+    cloneDeep,
+    getOperationDefinitionOrDie,
+    getOperationDefinition,
+} from 'apollo-utilities';
 
 const DIRECTIVE_NAME = 'serialize';
 
@@ -33,7 +38,7 @@ function extractDirectiveArguments(doc: DocumentNode, cache: DocumentCache = doc
 
     checkDocument(doc);
 
-    const directive = extractDirective(getOperationDefinition(doc), DIRECTIVE_NAME);
+    const directive = extractDirective(getOperationDefinitionOrDie(doc), DIRECTIVE_NAME);
     if (!directive) {
         return { doc };
     }
@@ -226,7 +231,7 @@ export function removeVariableDefinitionsFromDocumentIfUnused(names: string[], d
         return;
     }
 
-    const op = getOperationDefinition(doc);
+    const op = getOperationDefinitionOrDie(doc);
     if (op.variableDefinitions) {
         op.variableDefinitions = op.variableDefinitions.filter(d => !filteredNames.has(d.variable.name.value));
     }
