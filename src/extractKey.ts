@@ -212,6 +212,9 @@ export function getAllArgumentsFromSelection(
 export function getAllArgumentsFromDirectives(
   directives?: DirectiveNode[]
 ): ArgumentNode[] {
+  if (!directives) {
+    return [];
+  }
   return directives
     .map((d) => d.arguments || [])
     .reduce((allArguments, directiveArguments) => {

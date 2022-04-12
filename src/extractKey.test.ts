@@ -1,11 +1,12 @@
 import { gql } from '@apollo/client/core';
 import { createOperation } from '@apollo/client/link/utils';
-import { print } from 'graphql';
+import { DirectiveNode, print } from 'graphql';
 import {
   extractKey,
   getAllArgumentsFromDocument,
   getVariablesFromArguments,
   removeVariableDefinitionsFromDocumentIfUnused,
+  getAllArgumentsFromDirectives
 } from './extractKey';
 
 describe('extractKey', () => {
@@ -249,6 +250,7 @@ describe('extractKey', () => {
     expect(key2).toEqual('["baz"]');
     expect(op1.query).toBe(op2.query);
   });
+
 });
 
 describe('removeVariableDefinitionsFromDocumentIfUnused', () => {
@@ -294,4 +296,36 @@ describe('removeVariableDefinitionsFromDocumentIfUnused', () => {
 
     expect(print(query)).toEqual(print(query));
   });
+});
+describe('getAllArgumentsFromDirectives', () => {
+  it('handles the directives being missing', () => {
+    const output = getAllArgumentsFromDirectives();
+    expect(output).toEqual([]);
+  });
+
+  it('extracts the arguments from the passed directives', () => {
+    const input: DirectiveNode[] = [{
+      kind: 'Directive',
+      arguments: [{
+        kind: 'Argument',
+        name: {
+          kind: 'Name',
+          value: 'thing'
+        },
+        value: {
+          kind: 'BooleanValue',
+          value: true
+        }
+      }],
+      name: {
+        kind: 'Name',
+        value: 'thing'
+      }
+    }];
+
+    const output = getAllArgumentsFromDirectives(input);
+    expect(output).toEqual(([{ 'kind': 'Argument', 'name': { 'kind': 'Name', 'value': 'thing' }, 'value': { 'kind': 'BooleanValue', 'value': true } }]));
+  });
+
+
 });
